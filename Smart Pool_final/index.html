@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMART POOL</title>
+  <link rel="icon" href="./image.ico">
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./style.css"/>
+
+  <!-- Chart.js + time adapter (Luxon) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.5.0/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+
+  <!-- MQTT (Browser) -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="./Logo.png" alt="HCMUTE"/>
+        <div class="brand-text">
+          <div class="brand-title">SMART POOL</div>
+          <div class="brand-sub">Dashboard giám sát hồ bơi IoT</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="#" class="nav-link active" data-page="overview">Tổng quan</a>
+        <a href="#" class="nav-link" data-page="pool-1">Hồ bơi 1</a>
+        <a href="#" class="nav-link" data-page="pool-2">Hồ bơi 2</a>
+        <a href="#" class="nav-link" data-page="pool-3">Hồ bơi 3</a>
+      </nav>
+
+      <div class="statusbar">
+        <div class="status-left">
+          <span class="pill" id="mqtt-pill">MQTT: --</span>
+          <span class="pill" id="firebase-pill">Firebase: --</span>
+          <span class="pill" id="http-pill">HTTP: --</span>
+        </div>
+        <div class="status-right">
+          <span class="pill soft" id="time-pill">--:--:--</span>
+        </div>
+      </div>
+    </header>
+
+    <hr class="divider"/>
+
+    <!-- OVERVIEW PAGE -->
+    <section id="overview" class="page active">
+      <div class="overview-head">
+        <h2>Tổng quan hệ thống</h2>
+        <div class="overview-sub">Giám sát nhanh 3 hồ • bấm để xem chi tiết</div>
+      </div>
+
+      <div class="overview-grid">
+        <!-- Pool 1 -->
+        <div class="pool-card" data-pool="1">
+          <div class="pool-card-top">
+            <div class="pool-title">Hồ bơi 1</div>
+            <span class="badge ok" id="ov-badge-1">OK</span>
+          </div>
+
+          <div class="pool-kpis">
+            <div class="kpi">
+              <div class="kpi-label">Áp suất</div>
+              <div class="kpi-value" id="ov-pressure-1">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Nhiệt</div>
+              <div class="kpi-value" id="ov-temp-1">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">pH</div>
+              <div class="kpi-value" id="ov-ph-1">--</div>
+            </div>
+          </div>
+
+          <div class="pool-card-bottom">
+            <div class="left-mini">
+              <div class="signal-dot offline" id="ov-dot-1"></div>
+              <span class="mini-text" id="ov-online-1">--</span>
+            </div>
+            <button class="btn-primary" data-open-pool="1">Xem chi tiết</button>
+          </div>
+        </div>
+
+        <!-- Pool 2 -->
+        <div class="pool-card" data-pool="2">
+          <div class="pool-card-top">
+            <div class="pool-title">Hồ bơi 2</div>
+            <span class="badge ok" id="ov-badge-2">OK</span>
+          </div>
+
+          <div class="pool-kpis">
+            <div class="kpi">
+              <div class="kpi-label">Áp suất</div>
+              <div class="kpi-value" id="ov-pressure-2">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Nhiệt</div>
+              <div class="kpi-value" id="ov-temp-2">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">pH</div>
+              <div class="kpi-value" id="ov-ph-2">--</div>
+            </div>
+          </div>
+
+          <div class="pool-card-bottom">
+            <div class="left-mini">
+              <div class="signal-dot offline" id="ov-dot-2"></div>
+              <span class="mini-text" id="ov-online-2">--</span>
+            </div>
+            <button class="btn-primary" data-open-pool="2">Xem chi tiết</button>
+          </div>
+        </div>
+
+        <!-- Pool 3 -->
+        <div class="pool-card" data-pool="3">
+          <div class="pool-card-top">
+            <div class="pool-title">Hồ bơi 3</div>
+            <span class="badge ok" id="ov-badge-3">OK</span>
+          </div>
+
+          <div class="pool-kpis">
+            <div class="kpi">
+              <div class="kpi-label">Áp suất</div>
+              <div class="kpi-value" id="ov-pressure-3">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Nhiệt</div>
+              <div class="kpi-value" id="ov-temp-3">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">pH</div>
+              <div class="kpi-value" id="ov-ph-3">--</div>
+            </div>
+          </div>
+
+          <div class="pool-card-bottom">
+            <div class="left-mini">
+              <div class="signal-dot offline" id="ov-dot-3"></div>
+              <span class="mini-text" id="ov-online-3">--</span>
+            </div>
+            <button class="btn-primary" data-open-pool="3">Xem chi tiết</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- POOL 1 -->
+    <section id="pool-1" class="page">
+      <div class="page-head">
+        <h2 class="big-title">TRẠNG THÁI HỒ BƠI 1</h2>
+
+        <div class="chart-tabs">
+          <button class="chart-btn active" data-chart="pressure">💧 Áp suất nước</button>
+          <button class="chart-btn" data-chart="temperature">🌡️ Nhiệt độ</button>
+          <button class="chart-btn" data-chart="ph">🧪 Độ pH</button>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="main-pool-chart-1" height="120"></canvas>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-icon">💧</div>
+          <div class="metric-value" id="pressure-1">-- kPa</div>
+          <div class="metric-title">Áp suất nước</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">🌡️</div>
+          <div class="metric-value" id="temperature-1">--°C</div>
+          <div class="metric-title">Nhiệt độ</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">🧪</div>
+          <div class="metric-value" id="ph-1">-- pH</div>
+          <div class="metric-title">Độ pH</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <h3>Điều khiển</h3>
+        <div class="control-grid">
+          <button id="pump-toggle-1" class="control-btn on">Sóng ON</button>
+          <button id="heater-toggle-1" class="control-btn on">Nhiệt độ ON</button>
+          <button id="co2-toggle-1" class="control-btn on">Sục CO2 ON</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- POOL 2 -->
+    <section id="pool-2" class="page">
+      <div class="page-head">
+        <h2 class="big-title">TRẠNG THÁI HỒ BƠI 2</h2>
+
+        <div class="chart-tabs">
+          <button class="chart-btn active" data-chart="pressure">💧 Áp suất nước</button>
+          <button class="chart-btn" data-chart="temperature">🌡️ Nhiệt độ</button>
+          <button class="chart-btn" data-chart="ph">🧪 Độ pH</button>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="main-pool-chart-2" height="120"></canvas>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-icon">💧</div>
+          <div class="metric-value" id="pressure-2">-- kPa</div>
+          <div class="metric-title">Áp suất nước</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">🌡️</div>
+          <div class="metric-value" id="temperature-2">--°C</div>
+          <div class="metric-title">Nhiệt độ</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">🧪</div>
+          <div class="metric-value" id="ph-2">-- pH</div>
+          <div class="metric-title">Độ pH</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <h3>Điều khiển</h3>
+        <div class="control-grid">
+          <button id="pump-toggle-2" class="control-btn on">Sóng ON</button>
+          <button id="heater-toggle-2" class="control-btn on">Nhiệt độ ON</button>
+          <button id="co2-toggle-2" class="control-btn on">Sục CO2 ON</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- POOL 3 -->
+    <section id="pool-3" class="page">
+      <div class="page-head">
+        <h2 class="big-title">TRẠNG THÁI HỒ BƠI 3</h2>
+
+        <div class="chart-tabs">
+          <button class="chart-btn active" data-chart="pressure">💧 Áp suất nước</button>
+          <button class="chart-btn" data-chart="temperature">🌡️ Nhiệt độ</button>
+          <button class="chart-btn" data-chart="ph">🧪 Độ pH</button>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="main-pool-chart-3" height="120"></canvas>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-icon">💧</div>
+          <div class="metric-value" id="pressure-3">-- kPa</div>
+          <div class="metric-title">Áp suất nước</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">🌡️</div>
+          <div class="metric-value" id="temperature-3">--°C</div>
+          <div class="metric-title">Nhiệt độ</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">🧪</div>
+          <div class="metric-value" id="ph-3">-- pH</div>
+          <div class="metric-title">Độ pH</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <h3>Điều khiển</h3>
+        <div class="control-grid">
+          <button id="pump-toggle-3" class="control-btn on">Sóng ON</button>
+          <button id="heater-toggle-3" class="control-btn on">Nhiệt độ ON</button>
+          <button id="co2-toggle-3" class="control-btn on">Sục CO2 ON</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>GVHD:TS. Trương Quang Phúc<br>TT IoT thứ 2 • Nhóm: Nhật - Tiến - Quân</div>
+    </footer>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>
